@@ -2,7 +2,7 @@
 resource "aws_launch_template" "as_template" {
   name_prefix   = "terraform-lt-backend-"
   image_id      = "ami-056a29f2eddc40520"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
   key_name      = "soonge97"
 
   vpc_security_group_ids = [aws_security_group.terraform-sg-bastion.id]
