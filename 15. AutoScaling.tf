@@ -2,7 +2,7 @@
 resource "aws_launch_template" "as_template" {
   name_prefix   = "terraform-lt-backend-"
   image_id      = "ami-09c647964e09aae1e" # 아까 잘 되던 Amazon Linux 2023 서울 AMI 고정
-  instance_type = "t2.micro"              # [원복] 아까 100% 성공했던 사양 그대로 유지
+  instance_type = "t3.micro"              # [원복] 아까 100% 성공했던 사양 그대로 유지
   key_name      = aws_key_pair.soonge97_aws_key.key_name
 
   vpc_security_group_ids = [aws_security_group.terraform-sg-bastion.id]
