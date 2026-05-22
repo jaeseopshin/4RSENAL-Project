@@ -1,34 +1,23 @@
-# [추가] 현재 테라폼이 돌아가는 리전의 최신 Amazon Linux 2023 AMI를 자동으로 조회합니다.
-data "aws_ami" "amazon_linux_2023" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.*-x86_64"]
-  }
-}
-
 # 1. Launch Template 생성
 resource "aws_launch_template" "as_template" {
-  name_prefix = "terraform-lt-backend-"
-
-  # [수정] 수동 ID 대신 위에 선언한 자동 조회 데이터에서 ID를 받아옵니다. (리전 무관 100% 작동)
-  image_id = data.aws_ami.amazon_linux_2023.id
-
-  instance_type = "t3.micro"
+  name_prefix   = "terraform-lt-backend-"
+  image_id      = "ami-09c647964e09aae1e" # 아까 잘 되던 Amazon Linux 2023 서울 AMI 고정
+  instance_type = "t3.micro"              # [원복] 아까 100% 성공했던 사양 그대로 유지
   key_name      = aws_key_pair.soonge97_aws_key.key_name
 
   vpc_security_group_ids = [aws_security_group.terraform-sg-bastion.id]
 
+  # 아까 잘 되던 Nginx 세팅 흐름에 4RSENAL HTML 내용만 정확히 주입했습니다.
   user_data = base64encode(<<-EOF
     #!/bin/bash
     sudo dnf update -y
     sudo dnf install -y nginx
 
+    # Nginx 서비스를 먼저 활성화하고 켭니다.
     sudo systemctl enable nginx
     sudo systemctl start nginx
 
+    # 기존 기본 화면을 지우고 새로운 4RSENAL HTML을 넣습니다.
     sudo rm -f /usr/share/nginx/html/index.html
     sudo cat << 'HTML' > /usr/share/nginx/html/index.html
     <!DOCTYPE html>
@@ -75,6 +64,7 @@ resource "aws_launch_template" "as_template" {
     </html>
     HTML
 
+    # 변경된 HTML을 적용하기 위해 Nginx를 안전하게 리로드합니다.
     sudo systemctl reload nginx
   EOF
   )
