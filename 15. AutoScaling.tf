@@ -1,13 +1,13 @@
 # 1. Launch Template 생성
 resource "aws_launch_template" "as_template" {
   name_prefix   = "terraform-lt-backend-"
-  image_id      = "ami-09c647964e09aae1e" # 아까 잘 되던 Amazon Linux 2023 서울 AMI 고정
-  instance_type = "t3.micro"              # [원복] 아까 100% 성공했던 사양 그대로 유지
+  image_id      = "ami-09c647964e09aae1e" # Amazon Linux 2023
+  instance_type = "t2.micro"
   key_name      = aws_key_pair.soonge97_aws_key.key_name
 
   vpc_security_group_ids = [aws_security_group.terraform-sg-bastion.id]
 
-  # 아까 잘 되던 Nginx 세팅 흐름에 4RSENAL HTML 내용만 정확히 주입했습니다.
+  # [수정] Nginx가 확실하게 설치 -> 부팅 활성화 -> HTML 교체 -> 재시작 순으로 돌도록 정비했습니다.
   user_data = base64encode(<<-EOF
     #!/bin/bash
     sudo dnf update -y
@@ -17,7 +17,7 @@ resource "aws_launch_template" "as_template" {
     sudo systemctl enable nginx
     sudo systemctl start nginx
 
-    # 기존 기본 화면을 지우고 새로운 4RSENAL HTML을 넣습니다.
+    # 기존 기본 화면을 지우고 내가 만든 HTML을 넣습니다.
     sudo rm -f /usr/share/nginx/html/index.html
     sudo cat << 'HTML' > /usr/share/nginx/html/index.html
     <!DOCTYPE html>
@@ -25,40 +25,18 @@ resource "aws_launch_template" "as_template" {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>4RSENAL - Terraform Project</title>
+        <title>jaeseop.store</title>
         <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-            .container { text-align: center; background: white; padding: 50px 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 500px; width: 100%; }
-            .team-badge { background-color: #e7f3ff; color: #1877f2; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; display: inline-block; margin-bottom: 15px; letter-spacing: 1px; }
-            h1 { color: #1c1e21; margin: 0 0 10px 0; font-size: 28px; }
-            .project-name { color: #606770; font-size: 18px; margin-bottom: 30px; font-weight: 500; }
-            .divider { height: 1px; background-color: #e4e6eb; margin: 20px 0; }
-            .team-title { font-size: 16px; color: #1c1e21; font-weight: 600; margin-bottom: 15px; text-align: left; padding-left: 5px; }
-            .member-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; text-align: left; }
-            .member-card { background: #f7f8fa; padding: 12px 15px; border-radius: 8px; font-size: 15px; color: #4b4f56; border-left: 4px solid #ccd0d5; }
-            .member-card.leader { background: #e7f3ff; color: #1877f2; border-left: 4px solid #1877f2; font-weight: bold; }
-            .status-msg { margin-top: 30px; font-size: 13px; color: #90949c; }
+            body { font-family: 'Arial', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+            .container { text-align: center; background: white; padding: 50px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+            h1 { color: #1877f2; }
+            p { color: #666; font-size: 18px; }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="team-badge">TEAM 4RSENAL</div>
-            <h1>안녕하세요!</h1>
-            <div class="project-name">우리들의 인프라 공간, Terraform Project</div>
-            
-            <div class="divider"></div>
-            
-            <div class="team-title">👥 팀 구성원</div>
-            <div class="member-list">
-                <div class="member-card leader">신재섭 (조장)</div>
-                <div class="member-card">전병욱</div>
-                <div class="member-card">이은석</div>
-                <div class="member-card">정태환</div>
-            </div>
-            
-            <div class="status-msg">
-                테라폼 코드로 자동 구축된 웹 인프라에서 안정적으로 구동 중입니다. 🚀
-            </div>
+            <h1>4RSENAL : Terraform Project</h1>
+            <p>신재섭(조장), 전병욱, 이은석, 정태환 🚀</p>
         </div>
     </body>
     </html>
