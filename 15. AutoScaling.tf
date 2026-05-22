@@ -1,18 +1,25 @@
 # 1. Launch Template 생성
 resource "aws_launch_template" "as_template" {
   name_prefix   = "terraform-lt-backend-"
-  image_id      = "ami-056a29f2eddc40520"
-  instance_type = "t3.micro"
-  key_name      = "soonge97"
+  image_id      = "ami-09c647964e09aae1e" # Amazon Linux 2023
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.soonge97_aws_key.key_name
 
   vpc_security_group_ids = [aws_security_group.terraform-sg-bastion.id]
 
+  # [수정] Nginx가 확실하게 설치 -> 부팅 활성화 -> HTML 교체 -> 재시작 순으로 돌도록 정비했습니다.
   user_data = base64encode(<<-EOF
     #!/bin/bash
-    sudo apt update
-    sudo apt install -y nginx
-    sudo rm -f /var/www/html/index.html
-    sudo cat << 'HTML' > /var/www/html/index.html
+    sudo dnf update -y
+    sudo dnf install -y nginx
+
+    # Nginx 서비스를 먼저 활성화하고 켭니다.
+    sudo systemctl enable nginx
+    sudo systemctl start nginx
+
+    # 기존 기본 화면을 지우고 내가 만든 HTML을 넣습니다.
+    sudo rm -f /usr/share/nginx/html/index.html
+    sudo cat << 'HTML' > /usr/share/nginx/html/index.html
     <!DOCTYPE html>
     <html lang="ko">
     <head>
@@ -34,7 +41,9 @@ resource "aws_launch_template" "as_template" {
     </body>
     </html>
     HTML
-    sudo systemctl restart nginx
+
+    # 변경된 HTML을 적용하기 위해 Nginx를 안전하게 리로드합니다.
+    sudo systemctl reload nginx
   EOF
   )
 
@@ -65,6 +74,11 @@ resource "aws_autoscaling_group" "terraform-prd-asg" {
     id      = aws_launch_template.as_template.id
     version = "$Latest"
   }
+
+  depends_on = [
+    aws_lb.web-lb,
+    aws_lb_target_group.terraform-prd-tg
+  ]
 
   lifecycle {
     create_before_destroy = true
