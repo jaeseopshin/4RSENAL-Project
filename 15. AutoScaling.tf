@@ -35,8 +35,8 @@ resource "aws_launch_template" "as_template" {
     </head>
     <body>
         <div class="container">
-            <h1>4RSENAL : Terraform Project</h1>
-            <p>신재섭(조장), 전병욱, 이은석, 정태환 🚀</p>
+            <h1>4RSENAL - Terraform project</h1>
+            <p> 신재섭(조장), 전병욱, 이은석, 정태환 🚀</p>
         </div>
     </body>
     </html>
