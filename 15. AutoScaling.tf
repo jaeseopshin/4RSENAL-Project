@@ -1,14 +1,27 @@
+# [자동화] AWS로부터 현재 사용 가능한 최신 Amazon Linux 2023 이미지 ID를 실시간으로 조회합니다.
+data "aws_ami" "amazon_linux_2023" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["al2023-ami-2023.*-x86_64"]
+  }
+}
+
 # 1. Launch Template 생성
 resource "aws_launch_template" "as_template" {
-  # [해결] 캐시 꼬임을 박살내기 위해 이름 접두사를 신규 버전으로 변경합니다.
-  name_prefix   = "terraform-lt-v2-"
-  image_id      = "ami-09c647964e09aae1e" # Amazon Linux 2023 서울 AMI
-  instance_type = "t3.micro"              # 서울 리전 자원 부족 에러 우회용 규격
+  # 캐시 꼬임을 완전히 파괴하기 위해 이름 접두사를 신규 버전으로 변경합니다.
+  name_prefix = "terraform-lt-v3-"
+
+  # 실시간으로 찾아온 최신 살아있는 ID를 자동으로 꽂아줍니다.
+  image_id      = data.aws_ami.amazon_linux_2023.id
+  instance_type = "t3.micro" # 서울 리전 가용 영역 자원 부족 우회용 규격
   key_name      = aws_key_pair.soonge97_aws_key.key_name
 
   vpc_security_group_ids = [aws_security_group.terraform-sg-bastion.id]
 
-  # 보내주신 깔끔한 팀 정보 HTML을 완벽히 이식했습니다.
+  # 조장님이 작성하신 4RSENAL 팀 정보 HTML을 완벽히 이식했습니다.
   user_data = base64encode(<<-EOF
     #!/bin/bash
     sudo dnf update -y
