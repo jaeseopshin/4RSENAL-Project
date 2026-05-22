@@ -1,13 +1,14 @@
 # 1. Launch Template 생성
 resource "aws_launch_template" "as_template" {
-  name_prefix   = "terraform-lt-backend-"
-  image_id      = "ami-09c647964e09aae1e" # Amazon Linux 2023
-  instance_type = "t2.micro"
+  # [해결] 캐시 꼬임을 박살내기 위해 이름 접두사를 신규 버전으로 변경합니다.
+  name_prefix   = "terraform-lt-v2-"
+  image_id      = "ami-09c647964e09aae1e" # Amazon Linux 2023 서울 AMI
+  instance_type = "t3.micro"              # 서울 리전 자원 부족 에러 우회용 규격
   key_name      = aws_key_pair.soonge97_aws_key.key_name
 
   vpc_security_group_ids = [aws_security_group.terraform-sg-bastion.id]
 
-  # [수정] Nginx가 확실하게 설치 -> 부팅 활성화 -> HTML 교체 -> 재시작 순으로 돌도록 정비했습니다.
+  # 보내주신 깔끔한 팀 정보 HTML을 완벽히 이식했습니다.
   user_data = base64encode(<<-EOF
     #!/bin/bash
     sudo dnf update -y
